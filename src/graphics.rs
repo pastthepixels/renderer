@@ -1,18 +1,16 @@
 extern crate sdl2;
 
-use sdl2::{rect::Point, video::Window};
+use sdl2::video::Window;
 
-use crate::{
-    camera::PerspectiveCamera,
-    math::{Vector2, Vector3},
-};
+use crate::math::{Vector2, Vector3};
 
-pub struct Color(u8, u8, u8);
+pub struct Color(pub u8, pub u8, pub u8);
 
 pub struct Renderer {
     pub clear_color: Color,
     canvas: sdl2::render::Canvas<Window>,
     event_pump: sdl2::EventPump,
+    running: bool,
 }
 
 impl Color {
@@ -36,59 +34,41 @@ impl Renderer {
             clear_color: Color(0, 0, 0),
             canvas: window.into_canvas().build().unwrap(),
             event_pump: sdl_context.event_pump().unwrap(),
+            running: true,
         }
     }
 
     /// Initialises and runs a renderer with SDL2
+    /// TODO: removeme
     pub fn run(&mut self) {
-        self.canvas.set_draw_color(self.clear_color.to_sdl_color());
-
-        // TODO: remove
-        let mut camera = PerspectiveCamera::new(&Vector3::new(0., 0.5, 1.), 800., 600.);
-        camera.generate_projection_matrix();
-
         let mut fps_manager = sdl2::gfx::framerate::FPSManager::new();
+    }
 
-        fps_manager.set_framerate(75); // TODO: hard-coded because i have a 75 hz
-                                       // monitor
+    /// Returns true if the renderer is running
+    pub fn is_running(&self) -> bool {
+        self.running
+    }
 
-        'running: loop {
-            for event in self.event_pump.poll_iter() {
-                if let sdl2::event::Event::Quit { .. } = event {
-                    break 'running;
-                }
+    /// Draws everything, must be called at the end of each loop
+    pub fn update(&mut self) {
+        for event in self.event_pump.poll_iter() {
+            if let sdl2::event::Event::Quit { .. } = event {
+                self.running = false;
             }
-            // The rest of the game loop goes here...
-            self.render_loop();
-
-            // TODO: remove
-            self.draw_triangle(
-                &camera.to_ndc(&camera.project_point(&Vector3::new(-1., 0., 0.))),
-                &camera.to_ndc(&camera.project_point(&Vector3::new(-1., -1., 0.))),
-                &camera.to_ndc(&camera.project_point(&Vector3::new(0., -1., 0.))),
-            );
-            self.canvas.present();
-
-            //::std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 60));
-            fps_manager.delay();
         }
+        self.canvas.present();
+        ::std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
 
-    /// Draws everything, called on each loop
-    fn render_loop(&mut self) {
-        self.clear();
-        self.canvas.set_draw_color(Color(255, 1, 0).to_sdl_color());
-    }
-
-    /// Clears the canvas
-    fn clear(&mut self) {
+    /// Clears the canvas, must be called at the start of each loop
+    pub fn clear(&mut self) {
         self.canvas.set_draw_color(self.clear_color.to_sdl_color());
         self.canvas.clear();
     }
 
     /// Draws a barycentric triangle
     /// TODO: incorporate fill and depth (depth: make them vec3's)
-    fn draw_triangle(&mut self, a: &Vector2, b: &Vector2, c: &Vector2) {
+    pub fn draw_triangle(&mut self, a: &Vector2, b: &Vector2, c: &Vector2) {
         // Get bounding box
         let max_x = a.x.max(b.x).max(c.x);
         let max_y = a.y.max(b.y).max(c.y);
