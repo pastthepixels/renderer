@@ -17,8 +17,8 @@ impl PerspectiveCamera {
             size: Vector2::new(sizex, sizey),
             z_near: 0.1,
             z_far: 100.,
-            aspect: 1.,
-            fov: 3.14 / 2.,
+            aspect: sizex / sizey,
+            fov: std::f32::consts::PI / 2.,
             projection_matrix: Matrix44 { data: vec![] },
         }
     }

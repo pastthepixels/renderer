@@ -33,14 +33,13 @@ pub fn load(file_path: &str) -> Mesh {
                     let split = &line[2..].split(" ").collect::<Vec<_>>();
                     let mut face_vertices: Vec<u32> = Vec::new();
                     for vertex in split {
-                        face_vertices.push(vertex[..1].parse::<u32>().unwrap() - 1);
+                        let vertex_split = &vertex[0..].split("/").collect::<Vec<_>>();
+                        face_vertices.push(vertex_split[0].parse::<u32>().unwrap() - 1);
                     }
 
-                    faces.push(Face::new(
-                        face_vertices[0],
-                        face_vertices[1],
-                        face_vertices[2],
-                    ));
+                    let mut face = Face::new(face_vertices[0], face_vertices[1], face_vertices[2]);
+                    face.compute_normal(&vertices);
+                    faces.push(face);
 
                     println!("f {} {} {}", split[0], split[1], split[2]);
                 }

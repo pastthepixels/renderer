@@ -4,6 +4,7 @@ use sdl2::video::Window;
 
 use crate::math::{Vector2, Vector3};
 
+#[derive(Copy, Clone)]
 pub struct Color(pub u8, pub u8, pub u8);
 
 pub struct Renderer {
@@ -68,7 +69,8 @@ impl Renderer {
 
     /// Draws a barycentric triangle
     /// TODO: incorporate fill and depth (depth: make them vec3's)
-    pub fn draw_triangle(&mut self, a: &Vector2, b: &Vector2, c: &Vector2) {
+    pub fn draw_triangle(&mut self, a: &Vector2, b: &Vector2, c: &Vector2, color: &Color) {
+        self.canvas.set_draw_color(color.to_sdl_color());
         // Get bounding box
         let max_x = a.x.max(b.x).max(c.x);
         let max_y = a.y.max(b.y).max(c.y);
@@ -92,12 +94,15 @@ impl Renderer {
                     && coords.x + coords.y + coords.z >= 0.99
                 {
                     // TODO: depth
+                    /*
                     self.canvas.set_draw_color(sdl2::pixels::Color::RGB(
                         (coords.x * 255.) as u8,
                         (coords.y * 255.) as u8,
                         (coords.z * 255.) as u8,
-                    ));
-                    self.canvas.draw_point(sdl2::rect::Point::new(x, y));
+                    ));*/
+                    self.canvas
+                        .draw_point(sdl2::rect::Point::new(x, y))
+                        .expect(":(");
                 }
             }
         }
@@ -137,5 +142,25 @@ impl Renderer {
                 z: w,
             }
         }
+    }
+
+    // TODO: deleteme
+    pub fn draw_pixel_debug(&mut self, x: i32, y: i32) {
+        self.canvas
+            .set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
+        self.canvas
+            .draw_rect(sdl2::rect::Rect::new(x - 5, y - 5, 10, 10));
+    }
+}
+
+impl std::ops::Mul<f32> for Color {
+    type Output = Color;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Color(
+            (self.0 as f32 * rhs) as u8,
+            (self.1 as f32 * rhs) as u8,
+            (self.2 as f32 * rhs) as u8,
+        )
     }
 }

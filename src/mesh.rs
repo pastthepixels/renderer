@@ -17,8 +17,10 @@ impl Face {
         Face(a, b, c, Vector3::new(0., 0., 0.)) // TODO: compute_normal
     }
 
-    fn compute_normal(&self, vertices_list: &Vec<Vector3>) {
-        todo!(); // TODO: implement
+    pub fn compute_normal(&mut self, vertices_list: &Vec<Vector3>) {
+        self.3 = (vertices_list[self.0 as usize] - vertices_list[self.1 as usize])
+            .cross_product(&(vertices_list[self.1 as usize] - vertices_list[self.2 as usize]))
+            .normalised();
     }
 }
 
@@ -57,10 +59,13 @@ impl Mesh {
     pub fn draw(&self, renderer: &mut Renderer, camera: &PerspectiveCamera) {
         for face in &self.faces {
             // TODO: incorporate transformations
+            // TODO: hard-coded light
+            let color = self.color * face.3.cos_similarity(&Vector3::new(0., 1., -1.));
             renderer.draw_triangle(
                 &camera.to_ndc(&camera.project_point(&self.vertices[face.0 as usize])),
                 &camera.to_ndc(&camera.project_point(&self.vertices[face.1 as usize])),
                 &camera.to_ndc(&camera.project_point(&self.vertices[face.2 as usize])),
+                &color,
             );
         }
     }

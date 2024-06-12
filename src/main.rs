@@ -31,12 +31,17 @@ pub fn main() {
         ],
     );
 
-    let mesh_loaded = loader::load("models/cube.obj");
+    let mesh_loaded = loader::load("models/teapot.obj");
 
     while renderer.is_running() {
         renderer.clear();
 
         mesh_loaded.draw(&mut renderer, &camera);
+        /*
+        for vertex in &mesh_loaded.vertices {
+            let vertex = &camera.to_ndc(&camera.project_point(vertex));
+            renderer.draw_pixel_debug(vertex.x as i32, vertex.y as i32);
+        }*/
 
         renderer.update();
     }
