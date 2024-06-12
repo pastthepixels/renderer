@@ -3,6 +3,7 @@
 //
 // 2D vectors
 //
+#[derive(Copy, Clone)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,
@@ -11,6 +12,50 @@ pub struct Vector2 {
 impl std::fmt::Display for Vector2 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Vector2({}, {})", self.x, self.y)
+    }
+}
+
+impl std::ops::Add<Vector2> for Vector2 {
+    type Output = Vector2;
+
+    fn add(self, rhs: Vector2) -> Self::Output {
+        Vector2 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl std::ops::Sub<Vector2> for Vector2 {
+    type Output = Vector2;
+
+    fn sub(self, rhs: Vector2) -> Self::Output {
+        Vector2 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
+
+impl std::ops::Mul<f32> for Vector2 {
+    type Output = Vector2;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Vector2 {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+}
+
+impl Vector2 {
+    pub fn new(x: f32, y: f32) -> Vector2 {
+        Vector2 { x, y }
+    }
+
+    /// Returns the dot product of the current vector with another vector.
+    pub fn dot_product(&self, other: &Vector2) -> f32 {
+        self.x * other.x + self.y * other.y
     }
 }
 
@@ -68,9 +113,13 @@ impl std::ops::Mul<f32> for Vector3 {
 }
 
 impl Vector3 {
+    pub fn new(x: f32, y: f32, z: f32) -> Vector3 {
+        Vector3 { x, y, z }
+    }
+
     /// Returns the dot product of the current vector with another vector.
     pub fn dot_product(&self, other: &Vector3) -> f32 {
-        self.x * other.x + self.y * other.y + self.x * other.z
+        self.x * other.x + self.y * other.y + self.z * other.z
     }
 
     /// Returns the cross product of the current vector with another vector.
@@ -167,7 +216,7 @@ impl Matrix44 {
             w: self.get(3, 0) * other.x
                 + self.get(3, 1) * other.y
                 + self.get(3, 2) * other.z
-            // TODO wtf???? how does this work??????
+            // TODO: wtf???? how does this work??????
                 + self.get(2, 3) * other.w,
         }
     }

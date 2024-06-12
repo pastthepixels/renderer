@@ -2,7 +2,10 @@ extern crate sdl2;
 
 use sdl2::{rect::Point, video::Window};
 
-use crate::math::{Vector2, Vector3};
+use crate::{
+    camera::PerspectiveCamera,
+    math::{Vector2, Vector3},
+};
 
 pub struct Color(u8, u8, u8);
 
@@ -40,8 +43,9 @@ impl Renderer {
     pub fn run(&mut self) {
         self.canvas.set_draw_color(self.clear_color.to_sdl_color());
 
-        let mut pos = Vector2::new(0., 0.);
-        let mut velocity = Vector2::new(1., 1.);
+        // TODO: remove
+        let mut camera = PerspectiveCamera::new(&Vector3::new(0., 0.5, 1.), 800., 600.);
+        camera.generate_projection_matrix();
 
         let mut fps_manager = sdl2::gfx::framerate::FPSManager::new();
 
@@ -58,24 +62,10 @@ impl Renderer {
             self.render_loop();
 
             // TODO: remove
-            if pos.y == 400. {
-                velocity.y = -2.;
-            }
-            if pos.y == 0. {
-                velocity.y = 2.
-            }
-            if pos.x == 700. {
-                velocity.x = -2.;
-            }
-            if pos.x == 0. {
-                velocity.x = 2.;
-            }
-            pos.x += velocity.x;
-            pos.y += velocity.y;
             self.draw_triangle(
-                &Vector2::new(50. + pos.x, 0. + pos.y),
-                &Vector2::new(0. + pos.x, 200. + pos.y),
-                &Vector2::new(100. + pos.x, 200. + pos.y),
+                &camera.to_ndc(&camera.project_point(&Vector3::new(-1., 0., 0.))),
+                &camera.to_ndc(&camera.project_point(&Vector3::new(-1., -1., 0.))),
+                &camera.to_ndc(&camera.project_point(&Vector3::new(0., -1., 0.))),
             );
             self.canvas.present();
 

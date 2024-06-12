@@ -1,7 +1,9 @@
+mod camera;
 mod graphics;
 mod math;
 mod mesh;
 
-fn main() {
-    let face = mesh::Face(0, 1, 2);
+pub fn main() {
+    let mut renderer = graphics::Renderer::new("u tell me a spike rasterised this spike", 800, 600);
+    renderer.run();
 }
