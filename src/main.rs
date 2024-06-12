@@ -9,7 +9,7 @@ mod mesh;
 pub fn main() {
     let mut renderer = graphics::Renderer::new("u tell me a spike rasterised this spike", 800, 600);
 
-    let mut camera = camera::PerspectiveCamera::new(&math::Vector3::new(0., 0., 10.), 800., 600.);
+    let mut camera = camera::PerspectiveCamera::new(&math::Vector3::new(0., 0., 20.), 800., 600.);
     camera.generate_projection_matrix();
 
     let mesh = mesh::Mesh::new(
