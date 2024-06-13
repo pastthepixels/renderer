@@ -58,13 +58,16 @@ impl Mesh {
 
     pub fn draw(&self, renderer: &mut Renderer, camera: &PerspectiveCamera) {
         for face in &self.faces {
-            // TODO: incorporate transformations
-            // TODO: hard-coded light
-            let color = self.color * (1. - face.3.cos_similarity(&Vector3::new(0., -1., 1.)));
+            /*
+            TODO: incorporate transformations
+            TODO: hard-coded light
+            */
+            let shading = face.3.cos_similarity(&Vector3::new(0., -1., 0.)) * 0.5 + 0.2;
+            let color = self.color * (1. - shading);
             let a = camera.to_ndc(&camera.project_point(&self.vertices[face.0 as usize]));
             let b = camera.to_ndc(&camera.project_point(&self.vertices[face.1 as usize]));
             let c = camera.to_ndc(&camera.project_point(&self.vertices[face.2 as usize]));
-            if (b - a).x * (c - a).y - (c - a).x * (b - a).y <= 0. {
+            if (b - a).x * (c - a).y - (c - a).x * (b - a).y > 0. {
                 renderer.draw_triangle(&a, &b, &c, &color);
             }
         }

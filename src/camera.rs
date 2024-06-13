@@ -59,11 +59,12 @@ impl PerspectiveCamera {
         projected
     }
 
-    pub fn to_ndc(&self, projected: &Vector3) -> Vector2 {
+    pub fn to_ndc(&self, projected: &Vector3) -> Vector3 {
         // FIXME: un-invert this, fix matrix44 multiplication.
-        Vector2 {
+        Vector3 {
             x: ((-projected.x + 1.) * self.size.x) / 2.,
             y: ((projected.y + 1.) * self.size.y) / 2.,
+            z: projected.z, // x and y are 2d coords, z contains depth info
         }
     }
 }

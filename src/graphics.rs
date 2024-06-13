@@ -12,6 +12,7 @@ pub struct Renderer {
     canvas: sdl2::render::Canvas<Window>,
     event_pump: sdl2::EventPump,
     running: bool,
+    depth_buffer: Vec<f32>,
 }
 
 impl Color {
@@ -36,6 +37,7 @@ impl Renderer {
             canvas: window.into_canvas().build().unwrap(),
             event_pump: sdl_context.event_pump().unwrap(),
             running: true,
+            depth_buffer: vec![0.; (width * height) as usize],
         }
     }
 
@@ -57,31 +59,54 @@ impl Renderer {
                 self.running = false;
             }
         }
+        /*
+        for (i, d) in (&self.depth_buffer).iter().enumerate() {
+            if d != &-1. {
+                let y = i / 800;
+                let x = i - (y * 800);
+                let color = (1. - (d * 100. - 6.7) / 0.5) * 255.;
+                self.canvas
+                    .set_draw_color(Color(color as u8, color as u8, color as u8).to_sdl_color());
+                self.canvas
+                    .draw_point(sdl2::rect::Point::new(x as i32, y as i32))
+                    .expect("damn");
+            }
+        }*/
+
         self.canvas.present();
         ::std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
 
     /// Clears the canvas, must be called at the start of each loop
     pub fn clear(&mut self) {
+        self.depth_buffer = vec![-1.; self.depth_buffer.len()];
         self.canvas.set_draw_color(self.clear_color.to_sdl_color());
         self.canvas.clear();
     }
 
     /// Draws a barycentric triangle
     /// TODO: incorporate fill and depth (depth: make them vec3's)
-    pub fn draw_triangle(&mut self, a: &Vector2, b: &Vector2, c: &Vector2, color: &Color) {
+    pub fn draw_triangle(&mut self, a: &Vector3, b: &Vector3, c: &Vector3, color: &Color) {
         self.canvas.set_draw_color(color.to_sdl_color());
+        // Store window size
+        let (width, height) = self.canvas.window().size();
+        // Store Vector2 copies of a, b, and c
+        let a_2 = Vector2::new(a.x, a.y);
+        let b_2 = Vector2::new(b.x, b.y);
+        let c_2 = Vector2::new(c.x, c.y);
         // Get bounding box
         let max_x = a.x.max(b.x).max(c.x);
         let max_y = a.y.max(b.y).max(c.y);
         let min_x = a.x.min(b.x).min(c.x);
         let min_y = a.y.min(b.y).min(c.y);
         // TODO: this comment
-        let top_left = self.get_barycentric_coords(a, b, c, &Vector2::new(min_x, min_y));
+        let top_left = self.get_barycentric_coords(&a_2, &b_2, &c_2, &Vector2::new(min_x, min_y));
         let delta_y =
-            self.get_barycentric_coords(a, b, c, &Vector2::new(min_x, min_y + 1.)) - top_left;
+            self.get_barycentric_coords(&a_2, &b_2, &c_2, &Vector2::new(min_x, min_y + 1.))
+                - top_left;
         let delta_x =
-            self.get_barycentric_coords(a, b, c, &Vector2::new(min_x + 1., min_y)) - top_left;
+            self.get_barycentric_coords(&a_2, &b_2, &c_2, &Vector2::new(min_x + 1., min_y))
+                - top_left;
         // TODO: this comment
         for y in (min_y as i32)..(max_y as i32 + 1) {
             let coords_row = top_left + (delta_y * ((y as f32) - min_y));
@@ -93,16 +118,23 @@ impl Renderer {
                     && coords.z >= 0.
                     && coords.x + coords.y + coords.z >= 0.99
                 {
-                    // TODO: depth
                     /*
                     self.canvas.set_draw_color(sdl2::pixels::Color::RGB(
                         (coords.x * 255.) as u8,
                         (coords.y * 255.) as u8,
                         (coords.z * 255.) as u8,
                     ));*/
-                    self.canvas
-                        .draw_point(sdl2::rect::Point::new(x, y))
-                        .expect(":(");
+
+                    let depth = (coords.x * a.z + coords.y * b.z + coords.z * c.z).abs();
+                    if self.depth_buffer[(width as i32 * y + x) as usize] > depth
+                        || self.depth_buffer[(width as i32 * y + x) as usize] == -1.
+                    {
+                        self.depth_buffer[(width as i32 * y + x) as usize] = depth;
+
+                        self.canvas
+                            .draw_point(sdl2::rect::Point::new(x, y))
+                            .expect(":(");
+                    }
                 }
             }
         }
