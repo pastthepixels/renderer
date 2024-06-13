@@ -41,12 +41,6 @@ impl Renderer {
         }
     }
 
-    /// Initialises and runs a renderer with SDL2
-    /// TODO: removeme
-    pub fn run(&mut self) {
-        let mut fps_manager = sdl2::gfx::framerate::FPSManager::new();
-    }
-
     /// Returns true if the renderer is running
     pub fn is_running(&self) -> bool {
         self.running
@@ -59,22 +53,8 @@ impl Renderer {
                 self.running = false;
             }
         }
-        /*
-        for (i, d) in (&self.depth_buffer).iter().enumerate() {
-            if d != &-1. {
-                let y = i / 800;
-                let x = i - (y * 800);
-                let color = (1. - (d * 100. - 6.7) / 0.5) * 255.;
-                self.canvas
-                    .set_draw_color(Color(color as u8, color as u8, color as u8).to_sdl_color());
-                self.canvas
-                    .draw_point(sdl2::rect::Point::new(x as i32, y as i32))
-                    .expect("damn");
-            }
-        }*/
-
         self.canvas.present();
-        ::std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 60));
+        //::std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
 
     /// Clears the canvas, must be called at the start of each loop
@@ -118,18 +98,13 @@ impl Renderer {
                     && coords.z >= 0.
                     && coords.x + coords.y + coords.z >= 0.99
                 {
-                    /*
-                    self.canvas.set_draw_color(sdl2::pixels::Color::RGB(
-                        (coords.x * 255.) as u8,
-                        (coords.y * 255.) as u8,
-                        (coords.z * 255.) as u8,
-                    ));*/
-
                     let depth = (coords.x * a.z + coords.y * b.z + coords.z * c.z).abs();
-                    if self.depth_buffer[(width as i32 * y + x) as usize] > depth
-                        || self.depth_buffer[(width as i32 * y + x) as usize] == -1.
+                    let depth_index = (width as i32 * y + x) as usize;
+                    if depth_index <= self.depth_buffer.len()
+                        && (self.depth_buffer[(width as i32 * y + x) as usize] > depth
+                            || self.depth_buffer[(width as i32 * y + x) as usize] == -1.)
                     {
-                        self.depth_buffer[(width as i32 * y + x) as usize] = depth;
+                        self.depth_buffer[depth_index] = depth;
 
                         self.canvas
                             .draw_point(sdl2::rect::Point::new(x, y))
