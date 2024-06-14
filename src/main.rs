@@ -6,7 +6,7 @@ mod mesh;
 mod world;
 
 pub fn main() {
-    let file_path = "models/teapot.obj";
+    let file_path = "models/quad_damage/quad_damage.obj";
 
     let mut renderer = graphics::Renderer::new(
         &format!("u tell me a spike rasterised this {}", file_path),
@@ -15,7 +15,7 @@ pub fn main() {
     );
 
     let mut world = world::World {
-        camera: camera::PerspectiveCamera::new(&math::Vector3::new(0., 0., -50.), 800., 600.),
+        camera: camera::PerspectiveCamera::new(&math::Vector3::new(0., 0., -20.), 800., 600.),
         light: world::DirectionalLight::new(&math::Vector3::new(0., -1., 0.), 0.5),
         ambient: 0.2,
     };
@@ -25,6 +25,9 @@ pub fn main() {
     let mut mesh_loaded = loader::load(file_path);
 
     let mut keyframe = 0.;
+
+    mesh_loaded.transformation.quaternion.y = std::f32::consts::FRAC_1_SQRT_2;
+    mesh_loaded.transformation.quaternion.w = std::f32::consts::FRAC_1_SQRT_2;
 
     while renderer.is_running() {
         renderer.clear();
@@ -36,9 +39,12 @@ pub fn main() {
         } else {
             keyframe += 0.005 * std::f32::consts::PI;
         }
-        //world.camera.position.y = &keyframe.sin() * 0.8;
 
-        mesh_loaded.transformation.quaternion.w = &keyframe.sin() * 0.8;
+        //world.camera.position.y = &keyframe.sin() * 0.8;
+        //
+        mesh_loaded.transformation.quaternion.y = (keyframe / 2.).sin();
+        mesh_loaded.transformation.quaternion.w = (keyframe / 2.).cos();
+        mesh_loaded.transformation.quaternion = mesh_loaded.transformation.quaternion.normalised();
 
         renderer.update();
     }

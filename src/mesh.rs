@@ -42,28 +42,34 @@ impl Transformation {
         // Rotate
         let matrix = Matrix44 {
             data: vec![
-                self.quaternion.x,
-                -self.quaternion.y,
-                -self.quaternion.z,
-                -self.quaternion.w,
-                self.quaternion.y,
-                self.quaternion.x,
-                -self.quaternion.w,
-                self.quaternion.z,
-                self.quaternion.z,
-                self.quaternion.w,
-                self.quaternion.x,
-                -self.quaternion.y,
-                self.quaternion.w,
-                -self.quaternion.z,
-                self.quaternion.y,
-                self.quaternion.x,
+                1. - (2. * self.quaternion.y.powi(2) + 2. * self.quaternion.z.powi(2)),
+                2. * self.quaternion.x * self.quaternion.y
+                    + 2. * self.quaternion.z * self.quaternion.w,
+                2. * self.quaternion.x * self.quaternion.z
+                    - 2. * self.quaternion.y * self.quaternion.w,
+                0.,
+                2. * self.quaternion.x * self.quaternion.y
+                    - 2. * self.quaternion.w * self.quaternion.z,
+                1. - (2. * self.quaternion.x.powi(2) + 2. * self.quaternion.z.powi(2)),
+                2. * self.quaternion.y * self.quaternion.z
+                    + 2. * self.quaternion.w * self.quaternion.x,
+                0.,
+                2. * self.quaternion.x * self.quaternion.z
+                    + 2. * self.quaternion.w * self.quaternion.y,
+                2. * self.quaternion.y * self.quaternion.z
+                    - 2. * self.quaternion.w * self.quaternion.x,
+                1. - (2. * self.quaternion.x.powi(2) + 2. * self.quaternion.y.powi(2)),
+                0.,
+                0.,
+                0.,
+                0.,
+                1.,
             ],
         };
         let vec_rotated = matrix.multiply_vec4(&Vector4::new(point.x, point.y, point.z, 1.));
-        let point = Vector3::new(vec_rotated.x, vec_rotated.y, vec_rotated.z);
+        //let point = Vector3::new(vec_rotated.x, vec_rotated.y, vec_rotated.z);
         // Translate
-        point + self.position
+        vec_rotated.to_vector3()
     }
 }
 
@@ -85,7 +91,7 @@ impl Mesh {
             transformation: Transformation {
                 position: Vector3::new(0., 0., 0.),
                 scale: 1.0,
-                quaternion: Vector4::new(1., 0., 0., 0.),
+                quaternion: Vector4::new(0., 0., 0., 1.),
             },
             color: Color(255, 255, 255),
         }
