@@ -166,6 +166,7 @@ impl Vector3 {
 // 4D vectors
 //
 
+#[derive(Copy, Clone)]
 pub struct Vector4 {
     pub x: f32,
     pub y: f32,
@@ -180,12 +181,39 @@ impl std::fmt::Display for Vector4 {
 }
 
 impl Vector4 {
+    pub fn new(x: f32, y: f32, z: f32, w: f32) -> Vector4 {
+        Vector4 { x, y, z, w }
+    }
     pub fn to_vector3(&self) -> Vector3 {
-        let inverse_w = 1. / self.w;
-        Vector3 {
-            x: self.x * inverse_w,
-            y: self.y * inverse_w,
-            z: self.z * inverse_w,
+        if self.w == 0. {
+            Vector3 {
+                x: 0.,
+                y: 0.,
+                z: 0.,
+            }
+        } else {
+            let inverse_w = 1. / self.w;
+            Vector3 {
+                x: self.x * inverse_w,
+                y: self.y * inverse_w,
+                z: self.z * inverse_w,
+            }
+        }
+    }
+
+    /// Returns the length of a vector.
+    pub fn length(&self) -> f32 {
+        f32::sqrt(self.x.powi(2) + self.y.powi(2) + self.z.powi(2) + self.w.powi(2))
+    }
+
+    /// Normalises a vector.
+    pub fn normalised(&self) -> Vector4 {
+        let inverse_length = 1. / self.length();
+        Vector4 {
+            x: self.x * inverse_length,
+            y: self.y * inverse_length,
+            z: self.z * inverse_length,
+            w: self.w * inverse_length,
         }
     }
 }

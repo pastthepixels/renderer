@@ -1,4 +1,7 @@
-use crate::math::{Matrix44, Vector2, Vector3, Vector4};
+use crate::{
+    math::{Matrix44, Vector2, Vector3, Vector4},
+    mesh::Transformation,
+};
 
 pub struct PerspectiveCamera {
     pub position: Vector3,
@@ -46,11 +49,12 @@ impl PerspectiveCamera {
         }
     }
 
-    pub fn project_point(&self, point: &Vector3) -> Vector3 {
+    pub fn project_point(&self, point: &Vector3, transformation: &Transformation) -> Vector3 {
+        let point = transformation.transformed(point) - self.position;
         let projected = self.projection_matrix.multiply_vec4(&Vector4 {
-            x: point.x - self.position.x,
-            y: point.y - self.position.y,
-            z: point.z - self.position.z,
+            x: point.x,
+            y: point.y,
+            z: point.z,
             w: 1.,
         });
         let mut projected = projected.to_vector3();

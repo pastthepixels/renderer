@@ -93,7 +93,7 @@ impl Renderer {
             for x in (min_x as i32)..(max_x as i32 + 1) {
                 // Index of the point in the depth buffer
                 let depth_index = (width as i32 * y + x) as usize;
-                if depth_index <= self.depth_buffer.len() {
+                if depth_index < self.depth_buffer.len() {
                     // Store the entry in the depth buffer so there is only one read.
                     let depth_entry = self.depth_buffer[(width as i32 * y + x) as usize];
                     if depth_entry > a.z
@@ -109,8 +109,8 @@ impl Renderer {
                             && coords.x + coords.y + coords.z >= 0.99
                         {
                             // Depth
-                            let depth = (coords.x * a.z + coords.y * b.z + coords.z * c.z).abs();
-                            if depth_entry > depth || depth_entry == -1. {
+                            let depth = (coords.x * a.z + coords.y * b.z + coords.z * c.z);
+                            if (depth_entry > depth || depth_entry == -1.) && depth >= 0. {
                                 // Write to screen / depth buffer
                                 self.depth_buffer[depth_index] = depth;
                                 self.canvas
