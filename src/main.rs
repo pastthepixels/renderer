@@ -13,7 +13,7 @@ pub fn main() {
         600,
     );
 
-    let mut camera = camera::PerspectiveCamera::new(&math::Vector3::new(0., 0., 30.), 800., 600.);
+    let mut camera = camera::PerspectiveCamera::new(&math::Vector3::new(0., 0., -30.), 800., 600.);
     camera.generate_projection_matrix();
 
     let mesh_loaded = loader::load(file_path);
@@ -31,6 +31,8 @@ pub fn main() {
             keyframe += 0.005 * std::f32::consts::PI;
         }
         camera.position.y = &keyframe.sin() * 0.8;
+
+        renderer.draw_axes(&camera);
 
         renderer.update();
     }

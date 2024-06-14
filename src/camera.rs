@@ -48,9 +48,9 @@ impl PerspectiveCamera {
 
     pub fn project_point(&self, point: &Vector3) -> Vector3 {
         let projected = self.projection_matrix.multiply_vec4(&Vector4 {
-            x: point.x + self.position.x,
-            y: point.y + self.position.y,
-            z: point.z + self.position.z,
+            x: point.x - self.position.x,
+            y: point.y - self.position.y,
+            z: point.z - self.position.z,
             w: 1.,
         });
         let mut projected = projected.to_vector3();
@@ -60,7 +60,6 @@ impl PerspectiveCamera {
     }
 
     pub fn to_ndc(&self, projected: &Vector3) -> Vector3 {
-        // FIXME: un-invert this, fix matrix44 multiplication.
         Vector3 {
             x: ((-projected.x + 1.) * self.size.x) / 2.,
             y: ((projected.y + 1.) * self.size.y) / 2.,
