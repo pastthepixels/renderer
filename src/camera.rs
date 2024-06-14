@@ -37,7 +37,7 @@ impl PerspectiveCamera {
                 0.,
                 0.,
                 -self.z_far / (self.z_far - self.z_near),
-                -1.,
+                1.,
                 0.,
                 0.,
                 -self.z_far * self.z_near / (self.z_far - self.z_near),

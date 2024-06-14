@@ -216,8 +216,7 @@ impl Matrix44 {
             w: self.get(3, 0) * other.x
                 + self.get(3, 1) * other.y
                 + self.get(3, 2) * other.z
-            // TODO: wtf???? how does this work??????
-                + self.get(2, 3) * other.w,
+                + self.get(3, 3) * other.w,
         }
     }
 

@@ -159,14 +159,6 @@ impl Renderer {
             }
         }
     }
-
-    // TODO: deleteme
-    pub fn draw_pixel_debug(&mut self, x: i32, y: i32) {
-        self.canvas
-            .set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
-        self.canvas
-            .draw_rect(sdl2::rect::Rect::new(x - 5, y - 5, 10, 10));
-    }
 }
 
 impl std::ops::Mul<f32> for Color {
