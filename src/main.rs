@@ -32,8 +32,6 @@ pub fn main() {
         }
         camera.position.y = &keyframe.sin() * 0.8;
 
-        renderer.draw_axes(&camera);
-
         renderer.update();
     }
 }

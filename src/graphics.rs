@@ -159,32 +159,6 @@ impl Renderer {
             }
         }
     }
-
-    pub fn draw_axes(&mut self, camera: &crate::camera::PerspectiveCamera) {
-        let zero_projected = camera.to_ndc(&camera.project_point(&Vector3::new(0., 0., 0.)));
-        let zero = sdl2::rect::Point::new(zero_projected.x as i32, zero_projected.y as i32);
-        let x_projected = camera.to_ndc(&camera.project_point(&Vector3::new(1., 0., 0.)));
-        let y_projected = camera.to_ndc(&camera.project_point(&Vector3::new(0., 1., 0.)));
-        let z_projected = camera.to_ndc(&camera.project_point(&Vector3::new(0., 0., 1.)));
-        // r: x
-        self.canvas.set_draw_color(Color(255, 0, 0).to_sdl_color());
-        self.canvas.draw_line(
-            zero,
-            sdl2::rect::Point::new(x_projected.x as i32, x_projected.y as i32),
-        );
-        // g: y
-        self.canvas.set_draw_color(Color(0, 255, 0).to_sdl_color());
-        self.canvas.draw_line(
-            zero,
-            sdl2::rect::Point::new(y_projected.x as i32, y_projected.y as i32),
-        );
-        // b: z
-        self.canvas.set_draw_color(Color(0, 0, 255).to_sdl_color());
-        self.canvas.draw_line(
-            zero,
-            sdl2::rect::Point::new(z_projected.x as i32, z_projected.y as i32),
-        );
-    }
 }
 
 impl std::ops::Mul<f32> for Color {
