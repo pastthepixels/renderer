@@ -60,6 +60,9 @@ impl PerspectiveCamera {
         let mut projected = projected.to_vector3();
         // TODO: fix Z so it is between near and far, to fix hack
         projected.z = (projected.z - self.z_near) / (self.z_far - self.z_near);
+        if point.z < 0. {
+            projected.z *= -1.;
+        }
         projected
     }
 
