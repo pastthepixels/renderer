@@ -24,6 +24,8 @@ pub fn main() {
 
     let mut mesh_loaded = loader::load(file_path);
 
+    mesh_loaded.color = graphics::Color(72, 82, 118);
+
     let mut keyframe = 0.;
 
     mesh_loaded.transformation.quaternion.y = std::f32::consts::FRAC_1_SQRT_2;
@@ -32,20 +34,21 @@ pub fn main() {
     while renderer.is_running() {
         renderer.clear();
 
-        mesh_loaded.draw(&mut renderer, &world);
-
         if keyframe >= 2. * std::f32::consts::PI {
             keyframe = 0.;
         } else {
-            keyframe += 0.005 * std::f32::consts::PI;
+            keyframe += 0.01 * std::f32::consts::PI;
         }
 
-        //world.camera.position.y = &keyframe.sin() * 0.8;
-        //
+        world.camera.position.y = &keyframe.sin() * 0.2;
+
         mesh_loaded.transformation.quaternion.y = (keyframe / 2.).sin();
         mesh_loaded.transformation.quaternion.w = (keyframe / 2.).cos();
         mesh_loaded.transformation.quaternion = mesh_loaded.transformation.quaternion.normalised();
+        mesh_loaded.transformation.generate_affine_matrix();
 
+        mesh_loaded.draw(&mut renderer, &world);
         renderer.update();
+        renderer.auto_resize(&mut world.camera);
     }
 }

@@ -2,7 +2,10 @@ extern crate sdl2;
 
 use sdl2::video::Window;
 
-use crate::math::{Vector2, Vector3};
+use crate::{
+    camera::PerspectiveCamera,
+    math::{Vector2, Vector3},
+};
 
 #[derive(Copy, Clone)]
 pub struct Color(pub u8, pub u8, pub u8);
@@ -16,7 +19,7 @@ pub struct Renderer {
 }
 
 impl Color {
-    pub fn to_sdl_color(&self) -> sdl2::pixels::Color {
+    pub fn to_sdl_color(self) -> sdl2::pixels::Color {
         sdl2::pixels::Color::RGB(self.0, self.1, self.2)
     }
 }
@@ -29,6 +32,7 @@ impl Renderer {
         let window = video_subsystem
             .window(title, width, height)
             .position_centered()
+            .resizable()
             .build()
             .unwrap();
 
@@ -44,6 +48,23 @@ impl Renderer {
     /// Returns true if the renderer is running
     pub fn is_running(&self) -> bool {
         self.running
+    }
+
+    /// Automatically resizes the camera if the screen size changes
+    pub fn auto_resize(&mut self, camera: &mut PerspectiveCamera) {
+        for event in self.event_pump.poll_iter() {
+            if let sdl2::event::Event::Window {
+                win_event: sdl2::event::WindowEvent::Resized(width, height),
+                ..
+            } = event
+            {
+                camera.size.x = width as f32;
+                camera.size.y = height as f32;
+                camera.aspect = width as f32 / height as f32;
+                camera.generate_projection_matrix();
+                self.depth_buffer = vec![-1.; (width * height) as usize];
+            }
+        }
     }
 
     /// Draws everything, must be called at the end of each loop

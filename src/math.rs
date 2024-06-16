@@ -112,6 +112,14 @@ impl std::ops::Mul<f32> for Vector3 {
     }
 }
 
+impl std::cmp::PartialEq for Vector3 {
+    fn eq(&self, other: &Vector3) -> bool {
+        self.x == other.x && self.y == other.y && self.z == other.z
+    }
+}
+
+impl std::cmp::Eq for Vector3 {}
+
 impl Vector3 {
     pub fn new(x: f32, y: f32, z: f32) -> Vector3 {
         Vector3 { x, y, z }
