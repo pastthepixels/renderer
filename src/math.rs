@@ -256,6 +256,24 @@ impl Matrix44 {
         }
     }
 
+    /// Multiplies a 4x4 matrix by a Vector3 and uses the last for for addition.
+    pub fn multiply_vec3(&self, other: &Vector3) -> Vector3 {
+        Vector3 {
+            x: self.get(0, 0) * other.x
+                + self.get(0, 1) * other.y
+                + self.get(0, 2) * other.z
+                + self.get(0, 3),
+            y: self.get(1, 0) * other.x
+                + self.get(1, 1) * other.y
+                + self.get(1, 2) * other.z
+                + self.get(1, 3),
+            z: self.get(2, 0) * other.x
+                + self.get(2, 1) * other.y
+                + self.get(2, 2) * other.z
+                + self.get(2, 3),
+        }
+    }
+
     /// Gets the i, j entry of a 4x4 matrix.
     pub fn get(&self, row: u32, col: u32) -> f32 {
         self.data[(row * 4 + col) as usize]

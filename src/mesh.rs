@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::graphics::Color;
 use crate::graphics::Renderer;
 use crate::math::Matrix44;
+use crate::math::Vector2;
 use crate::math::Vector3;
 use crate::math::Vector4;
 use crate::world::World;
@@ -40,10 +41,7 @@ pub struct Transformation {
 
 impl Transformation {
     pub fn transformed(&self, point: &Vector3) -> Vector3 {
-        //if self.cached.contains_key(*point) {}
-        self.affine_matrix
-            .multiply_vec4(&Vector4::new(point.x, point.y, point.z, 1.))
-            .to_vector3()
+        self.affine_matrix.multiply_vec3(point)
     }
 
     /// Generates an affine transformation matrix. Needs to be called after the position/quaternion
@@ -62,9 +60,9 @@ impl Transformation {
             2. * self.quaternion.y * self.quaternion.z - 2. * self.quaternion.w * self.quaternion.x,
             1. - (2. * self.quaternion.x.powi(2) + 2. * self.quaternion.y.powi(2)),
             0.,
-            0.,
-            0.,
-            0.,
+            self.position.x,
+            self.position.y,
+            self.position.z,
             1.,
         ]
     }
@@ -98,10 +96,17 @@ impl Mesh {
     /// Draws the mesh onto the screen. Must be called after an affine matrix is generated for its
     /// transformation (see Transformation.generate_affine_matrix)
     pub fn draw(&self, renderer: &mut Renderer, world: &World) {
+        let vertices_projected: Vec<Vector3> = self
+            .vertices
+            .clone()
+            .iter()
+            .map(|vertex| {
+                world
+                    .camera
+                    .to_ndc(&world.camera.project_point(vertex, &self.transformation))
+            })
+            .collect();
         for face in &self.faces {
-            /*
-            TODO: incorporate transformations
-            */
             let shading = self
                 .transformation
                 .transformed(&face.3)
@@ -109,21 +114,9 @@ impl Mesh {
                 * world.light.intensity
                 + world.ambient;
             let color = self.color * (1. - shading);
-            let a = world.camera.to_ndc(
-                &world
-                    .camera
-                    .project_point(&self.vertices[face.0 as usize], &self.transformation),
-            );
-            let b = world.camera.to_ndc(
-                &world
-                    .camera
-                    .project_point(&self.vertices[face.1 as usize], &self.transformation),
-            );
-            let c = world.camera.to_ndc(
-                &world
-                    .camera
-                    .project_point(&self.vertices[face.2 as usize], &self.transformation),
-            );
+            let a = vertices_projected[face.0 as usize];
+            let b = vertices_projected[face.1 as usize];
+            let c = vertices_projected[face.2 as usize];
             if (b - a).x * (c - a).y - (c - a).x * (b - a).y > 0. {
                 renderer.draw_triangle(&a, &b, &c, &color);
             }

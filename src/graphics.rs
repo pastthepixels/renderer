@@ -2,10 +2,7 @@ extern crate sdl2;
 
 use sdl2::video::Window;
 
-use crate::{
-    camera::PerspectiveCamera,
-    math::{Vector2, Vector3},
-};
+use crate::{camera::PerspectiveCamera, math::Vector3};
 
 #[derive(Copy, Clone)]
 pub struct Color(pub u8, pub u8, pub u8);
@@ -108,7 +105,7 @@ impl Renderer {
             for x in (min_x as u16)..(max_x as u16 + 1) {
                 // Index of the point in the depth buffer
                 let depth_index = width as usize * y as usize + x as usize;
-                if depth_index < self.depth_buffer.len() {
+                if depth_index < self.depth_buffer.len() && x < width {
                     // Barycentric coordinates
                     let coords = coords_row + (delta_x * ((x as f32) - min_x));
                     if coords.x >= 0.

@@ -51,15 +51,15 @@ impl PerspectiveCamera {
 
     pub fn project_point(&self, point: &Vector3, transformation: &Transformation) -> Vector3 {
         let point = transformation.transformed(point) - self.position;
-        let projected = self.projection_matrix.multiply_vec4(&Vector4 {
-            x: point.x,
-            y: point.y,
-            z: point.z,
-            w: 1.,
-        });
-        let mut projected = projected.to_vector3();
-        // TODO: fix Z so it is between near and far, to fix hack
-        projected.z = (projected.z - self.z_near) / (self.z_far - self.z_near);
+        let mut projected = self
+            .projection_matrix
+            .multiply_vec4(&Vector4 {
+                x: point.x,
+                y: point.y,
+                z: point.z,
+                w: 1.,
+            })
+            .to_vector3();
         if point.z < 0. {
             projected.z *= -1.;
         }
