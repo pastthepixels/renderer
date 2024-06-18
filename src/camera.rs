@@ -66,11 +66,9 @@ impl PerspectiveCamera {
         projected
     }
 
-    pub fn to_ndc(&self, projected: &Vector3) -> Vector3 {
-        Vector3 {
-            x: ((-projected.x + 1.) * self.size.x) / 2.,
-            y: ((projected.y + 1.) * self.size.y) / 2.,
-            z: projected.z, // x and y are 2d coords, z contains depth info
-        }
+    pub fn to_ndc(&self, mut projected: Vector3) -> Vector3 {
+        projected.x = ((-projected.x + 1.) * self.size.x) / 2.;
+        projected.y = ((projected.y + 1.) * self.size.y) / 2.;
+        projected
     }
 }

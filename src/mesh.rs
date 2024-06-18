@@ -1,9 +1,6 @@
-use std::collections::HashMap;
-
 use crate::graphics::Color;
 use crate::graphics::Renderer;
 use crate::math::Matrix44;
-use crate::math::Vector2;
 use crate::math::Vector3;
 use crate::math::Vector4;
 use crate::world::World;
@@ -103,21 +100,21 @@ impl Mesh {
             .map(|vertex| {
                 world
                     .camera
-                    .to_ndc(&world.camera.project_point(vertex, &self.transformation))
+                    .to_ndc(world.camera.project_point(vertex, &self.transformation))
             })
             .collect();
         for face in &self.faces {
-            let shading = self
-                .transformation
-                .transformed(&face.3)
-                .cos_similarity(&world.light.direction)
-                * world.light.intensity
-                + world.ambient;
-            let color = self.color * (1. - shading);
             let a = vertices_projected[face.0 as usize];
             let b = vertices_projected[face.1 as usize];
             let c = vertices_projected[face.2 as usize];
-            if (b - a).x * (c - a).y - (c - a).x * (b - a).y > 0. {
+            if (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y) > 0. {
+                let shading = self
+                    .transformation
+                    .transformed(&face.3)
+                    .cos_similarity(&world.light.direction)
+                    * world.light.intensity
+                    + world.ambient;
+                let color = self.color * (1. - shading);
                 renderer.draw_triangle(&a, &b, &c, &color);
             }
         }

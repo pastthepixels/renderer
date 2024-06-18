@@ -13,6 +13,7 @@ pub struct Renderer {
     event_pump: sdl2::EventPump,
     running: bool,
     depth_buffer: Vec<f32>,
+    empty_buffer: Vec<f32>,
 }
 
 impl Color {
@@ -38,7 +39,8 @@ impl Renderer {
             canvas: window.into_canvas().build().unwrap(),
             event_pump: sdl_context.event_pump().unwrap(),
             running: true,
-            depth_buffer: vec![0.; (width * height) as usize],
+            depth_buffer: Vec::new(),
+            empty_buffer: vec![-1.; (width * height) as usize],
         }
     }
 
@@ -59,7 +61,7 @@ impl Renderer {
                 camera.size.y = height as f32;
                 camera.aspect = width as f32 / height as f32;
                 camera.generate_projection_matrix();
-                self.depth_buffer = vec![-1.; (width * height) as usize];
+                self.empty_buffer = vec![-1.; (width * height) as usize];
             }
         }
     }
@@ -77,7 +79,7 @@ impl Renderer {
 
     /// Clears the canvas, must be called at the start of each loop
     pub fn clear(&mut self) {
-        self.depth_buffer = vec![-1.; self.depth_buffer.len()];
+        self.depth_buffer = self.empty_buffer.clone();
         self.canvas.set_draw_color(self.clear_color.to_sdl_color());
         self.canvas.clear();
     }

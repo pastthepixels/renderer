@@ -226,6 +226,19 @@ impl Vector4 {
     }
 }
 
+impl std::ops::Mul<f32> for Vector4 {
+    type Output = Vector4;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Vector4 {
+            x: self.x * rhs,
+            y: self.y * rhs,
+            z: self.z * rhs,
+            w: self.w * rhs,
+        }
+    }
+}
+
 //
 // Matrices (4x4)
 
