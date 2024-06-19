@@ -14,6 +14,8 @@ pub struct Renderer {
     running: bool,
     depth_buffer: Vec<f32>,
     empty_buffer: Vec<f32>,
+    width: u32,
+    height: u32,
 }
 
 impl Color {
@@ -41,6 +43,8 @@ impl Renderer {
             running: true,
             depth_buffer: Vec::new(),
             empty_buffer: vec![-1.; (width * height) as usize],
+            width,
+            height,
         }
     }
 
@@ -57,6 +61,8 @@ impl Renderer {
                 ..
             } = event
             {
+                self.width = width as u32;
+                self.height = height as u32;
                 camera.size.x = width as f32;
                 camera.size.y = height as f32;
                 camera.aspect = width as f32 / height as f32;
@@ -86,30 +92,56 @@ impl Renderer {
 
     /// Draws a barycentric triangle
     pub fn draw_triangle(&mut self, a: &Vector3, b: &Vector3, c: &Vector3, color: &Color) {
+        // TODO: image buffer
         self.canvas.set_draw_color(color.to_sdl_color());
-        // Store window size
-        let width = self.canvas.window().size().0 as u16;
-        // Get bounding box
-        let max_x = a.x.max(b.x).max(c.x);
-        let max_y = a.y.max(b.y).max(c.y);
-        let min_x = a.x.min(b.x).min(c.x);
-        let min_y = a.y.min(b.y).min(c.y);
+        // Get bounding box (and then clip to screen bounds)
+        let max_x =
+            (self.width as i32).min(*[a.x, b.x, c.x].map(|y| y as i32).iter().max().unwrap());
+        let max_y =
+            (self.height as i32).min(*[a.y, b.y, c.y].map(|y| y as i32).iter().max().unwrap());
+        let min_x = 0.max(*[a.x, b.x, c.x].map(|x| x as i32).iter().min().unwrap());
+        let min_y = 0.max(*[a.y, b.y, c.y].map(|y| y as i32).iter().min().unwrap());
         // Get the barycentric coordinates at the top left and when x or y increments
-        let top_left = self.get_barycentric_coords(a, b, c, &Vector3::new(min_x, min_y, 0.));
-        let delta_y =
-            self.get_barycentric_coords(a, b, c, &Vector3::new(min_x, min_y + 1., 0.)) - top_left;
-        let delta_x =
-            self.get_barycentric_coords(a, b, c, &Vector3::new(min_x + 1., min_y, 0.)) - top_left;
+        let top_left = Renderer::get_barycentric_coords(
+            a.x,
+            a.y,
+            b.x,
+            b.y,
+            c.x,
+            c.y,
+            min_x as f32,
+            min_y as f32,
+        );
+        let delta_y = Renderer::get_barycentric_coords(
+            a.x,
+            a.y,
+            b.x,
+            b.y,
+            c.x,
+            c.y,
+            min_x as f32,
+            (min_y + 1) as f32,
+        ) - top_left;
+        let delta_x = Renderer::get_barycentric_coords(
+            a.x,
+            a.y,
+            b.x,
+            b.y,
+            c.x,
+            c.y,
+            (min_x + 1) as f32,
+            min_y as f32,
+        ) - top_left;
         // Drawing
-        for y in (min_y as u16)..(max_y as u16 + 1) {
+        for y in min_y..(max_y + 1) {
             // Barycentric coordinates for the left of the row.
-            let coords_row = top_left + (delta_y * ((y as f32) - min_y));
-            for x in (min_x as u16)..(max_x as u16 + 1) {
+            let coords_row = top_left + (delta_y * (y - min_y) as f32);
+            for x in min_x..(max_x + 1) {
                 // Index of the point in the depth buffer
-                let depth_index = width as usize * y as usize + x as usize;
-                if depth_index < self.depth_buffer.len() && x < width {
+                let depth_index = self.width as usize * y as usize + x as usize;
+                if depth_index < self.depth_buffer.len() && x < self.width.try_into().unwrap() {
                     // Barycentric coordinates
-                    let coords = coords_row + (delta_x * ((x as f32) - min_x));
+                    let coords = coords_row + delta_x * ((x - min_x) as f32);
                     if coords.x >= 0.
                         && coords.y >= 0.
                         && coords.z >= 0.
@@ -122,7 +154,7 @@ impl Renderer {
                             // Write to screen / depth buffer
                             self.depth_buffer[depth_index] = depth;
                             self.canvas
-                                .draw_point(sdl2::rect::Point::new(x as i32, y as i32))
+                                .draw_point(sdl2::rect::Point::new(x, y))
                                 .expect(":(");
                         }
                     }
@@ -131,25 +163,21 @@ impl Renderer {
         }
     }
 
-    /// NOTE: We're using Vector3's when this algorithm was designed for Vector2's. The z might
-    /// mess things up, so check this function if rendering is wonky.
     fn get_barycentric_coords(
-        &self,
-        a: &Vector3,
-        b: &Vector3,
-        c: &Vector3,
-        p: &Vector3,
+        a_x: f32,
+        a_y: f32,
+        b_x: f32,
+        b_y: f32,
+        c_x: f32,
+        c_y: f32,
+        p_x: f32,
+        p_y: f32,
     ) -> Vector3 {
-        let vec0 = *b - *a;
-        let vec1 = *c - *a;
-        let vec2 = *p - *a;
-
-        let d00 = vec0.dot_product(&vec0);
-        let d01 = vec0.dot_product(&vec1);
-        let d11 = vec1.dot_product(&vec1);
-        let d20 = vec2.dot_product(&vec0);
-        let d21 = vec2.dot_product(&vec1);
-
+        let d00 = (b_x - a_x).powi(2) + (b_y - a_y).powi(2);
+        let d01 = (b_x - a_x) * (c_x - a_x) + (b_y - a_y) * (c_y - a_y);
+        let d11 = (c_x - a_x).powi(2) + (c_y - a_y).powi(2);
+        let d20 = (b_x - a_x) * (p_x - a_x) + (b_y - a_y) * (p_y - a_y);
+        let d21 = (p_x - a_x) * (c_x - a_x) + (p_y - a_y) * (c_y - a_y);
         let det = d00 * d11 - d01 * d01;
 
         if det == 0. {
@@ -162,7 +190,7 @@ impl Renderer {
             let v = (d11 * d20 - d01 * d21) / det;
             let w = (d00 * d21 - d01 * d20) / det;
             Vector3 {
-                x: 1.0 - v - w,
+                x: 1. - v - w,
                 y: v,
                 z: w,
             }
