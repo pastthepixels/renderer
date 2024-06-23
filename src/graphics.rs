@@ -12,16 +12,11 @@ pub struct Renderer {
     canvas: sdl2::render::Canvas<Window>,
     event_pump: sdl2::EventPump,
     running: bool,
+    // TODO: Box<f32> instead of Vec<f32>
     depth_buffer: Vec<f32>,
     empty_buffer: Vec<f32>,
     width: u32,
     height: u32,
-}
-
-impl Color {
-    pub fn to_sdl_color(self) -> sdl2::pixels::Color {
-        sdl2::pixels::Color::RGB(self.0, self.1, self.2)
-    }
 }
 
 impl Renderer {
@@ -86,14 +81,18 @@ impl Renderer {
     /// Clears the canvas, must be called at the start of each loop
     pub fn clear(&mut self) {
         self.depth_buffer = self.empty_buffer.clone();
-        self.canvas.set_draw_color(self.clear_color.to_sdl_color());
+
+        self.canvas.set_draw_color(sdl2::pixels::Color::RGB(
+            self.clear_color.0,
+            self.clear_color.1,
+            self.clear_color.2,
+        ));
         self.canvas.clear();
     }
 
     /// Draws a barycentric triangle
     pub fn draw_triangle(&mut self, a: &Vector3, b: &Vector3, c: &Vector3, color: &Color) {
         // TODO: image buffer
-        self.canvas.set_draw_color(color.to_sdl_color());
         // Get bounding box (and then clip to screen bounds)
         let max_x =
             (self.width as i32).min(*[a.x, b.x, c.x].map(|y| y as i32).iter().max().unwrap());
@@ -137,26 +136,17 @@ impl Renderer {
             // Barycentric coordinates for the left of the row.
             let coords_row = top_left + (delta_y * (y - min_y) as f32);
             for x in min_x..(max_x + 1) {
-                // Index of the point in the depth buffer
-                let depth_index = self.width as usize * y as usize + x as usize;
-                if depth_index < self.depth_buffer.len() && x < self.width.try_into().unwrap() {
-                    // Barycentric coordinates
-                    let coords = coords_row + delta_x * ((x - min_x) as f32);
-                    if coords.x >= 0.
-                        && coords.y >= 0.
-                        && coords.z >= 0.
-                        && coords.x + coords.y + coords.z >= 0.99
-                    {
-                        // Depth
-                        let depth_entry = self.depth_buffer[depth_index];
-                        let depth = coords.x * a.z + coords.y * b.z + coords.z * c.z;
-                        if (depth_entry > depth || depth_entry == -1.) && depth > 0. {
-                            // Write to screen / depth buffer
-                            self.depth_buffer[depth_index] = depth;
-                            self.canvas
-                                .draw_point(sdl2::rect::Point::new(x, y))
-                                .expect(":(");
-                        }
+                // Barycentric coordinates
+                let coords = coords_row + delta_x * ((x - min_x) as f32);
+                if coords.x >= 0. && coords.y >= 0. && coords.z >= 0. {
+                    // Depth
+                    let depth_index = self.width as usize * y as usize + x as usize;
+                    let depth_entry = self.depth_buffer[depth_index];
+                    let depth = coords.x * a.z + coords.y * b.z + coords.z * c.z;
+                    if (depth_entry > depth || depth_entry == -1.) && depth > 0. {
+                        // Write to screen / depth buffer
+                        self.depth_buffer[depth_index] = depth;
+                        self.draw_pixel(x, y, color);
                     }
                 }
             }
@@ -180,21 +170,21 @@ impl Renderer {
         let d21 = (p_x - a_x) * (c_x - a_x) + (p_y - a_y) * (c_y - a_y);
         let det = d00 * d11 - d01 * d01;
 
-        if det == 0. {
-            Vector3 {
-                x: 0.,
-                y: 0.,
-                z: 0.,
-            }
-        } else {
-            let v = (d11 * d20 - d01 * d21) / det;
-            let w = (d00 * d21 - d01 * d20) / det;
-            Vector3 {
-                x: 1. - v - w,
-                y: v,
-                z: w,
-            }
+        let v = (d11 * d20 - d01 * d21) / det;
+        let w = (d00 * d21 - d01 * d20) / det;
+        Vector3 {
+            x: 1. - v - w,
+            y: v,
+            z: w,
         }
+    }
+
+    fn draw_pixel(&mut self, x: i32, y: i32, color: &Color) {
+        self.canvas
+            .set_draw_color(sdl2::pixels::Color::RGB(color.0, color.1, color.2));
+        self.canvas
+            .draw_point(sdl2::rect::Point::new(x, y))
+            .expect(":(");
     }
 }
 

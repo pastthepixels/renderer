@@ -52,11 +52,6 @@ impl Vector2 {
     pub fn new(x: f32, y: f32) -> Vector2 {
         Vector2 { x, y }
     }
-
-    /// Returns the dot product of the current vector with another vector.
-    pub fn dot_product(&self, other: &Vector2) -> f32 {
-        self.x * other.x + self.y * other.y
-    }
 }
 
 //
@@ -192,7 +187,7 @@ impl Vector4 {
     pub fn new(x: f32, y: f32, z: f32, w: f32) -> Vector4 {
         Vector4 { x, y, z, w }
     }
-    pub fn to_vector3(&self) -> Vector3 {
+    pub fn to_vector3(self) -> Vector3 {
         if self.w == 0. {
             Vector3 {
                 x: 0.,
