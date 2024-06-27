@@ -2,7 +2,7 @@ extern crate sdl2;
 
 use sdl2::video::Window;
 
-use crate::{camera::PerspectiveCamera, math::Vector3};
+use crate::{camera::PerspectiveCamera, math::Vector3, shaders::Shader};
 
 #[derive(Copy, Clone)]
 pub struct Color(pub u8, pub u8, pub u8);
@@ -90,7 +90,14 @@ impl Renderer {
     }
 
     /// Draws a barycentric triangle
-    pub fn draw_triangle(&mut self, a: &Vector3, b: &Vector3, c: &Vector3, color: &Color) {
+    pub fn draw_triangle(
+        &mut self,
+        a: &Vector3,
+        b: &Vector3,
+        c: &Vector3,
+        shader: &dyn Shader,
+        brightness: f32,
+    ) {
         // TODO: image buffer
         // Get bounding box (and then clip to screen bounds)
         let max_x =
@@ -145,7 +152,7 @@ impl Renderer {
                     if (depth_entry > depth || depth_entry == -1.) && depth > 0. {
                         // Write to screen / depth buffer
                         self.depth_buffer[depth_index] = depth;
-                        self.draw_pixel(x, y, color);
+                        self.draw_pixel(x, y, &(shader.fragment(&coords) * brightness));
                     }
                 }
             }

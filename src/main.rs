@@ -3,6 +3,7 @@ mod graphics;
 mod loader;
 mod math;
 mod mesh;
+mod shaders;
 mod world;
 
 pub fn main() {
@@ -24,7 +25,8 @@ pub fn main() {
 
     let mut mesh_loaded = loader::load(file_path);
 
-    mesh_loaded.color = graphics::Color(72, 82, 118);
+    let shader = shaders::StandardShader::new(graphics::Color(72, 82, 118));
+    mesh_loaded.shader = Box::new(shader);
 
     let mut keyframe = 0.;
 

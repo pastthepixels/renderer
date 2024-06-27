@@ -3,6 +3,7 @@ use std::fs;
 use crate::{
     math::Vector3,
     mesh::{Face, Mesh},
+    shaders,
 };
 
 /// Loads an .obj file to a Mesh

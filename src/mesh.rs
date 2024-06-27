@@ -1,8 +1,13 @@
+use std::ops::Deref;
+
 use crate::graphics::Color;
 use crate::graphics::Renderer;
 use crate::math::Matrix44;
 use crate::math::Vector3;
 use crate::math::Vector4;
+use crate::shaders;
+use crate::shaders::Shader;
+use crate::shaders::StandardShader;
 use crate::world::World;
 
 //
@@ -72,7 +77,7 @@ pub struct Mesh {
     pub vertices: Vec<Vector3>,
     pub faces: Vec<Face>,
     pub transformation: Transformation,
-    pub color: Color,
+    pub shader: Box<dyn shaders::Shader>,
 }
 
 impl Mesh {
@@ -86,13 +91,13 @@ impl Mesh {
                 quaternion: Vector4::new(0., 0., 0., 1.),
                 affine_matrix: Matrix44 { data: Vec::new() },
             },
-            color: Color(255, 255, 255),
+            shader: Box::new(StandardShader::new(Color(255, 255, 255))),
         }
     }
 
     /// Draws the mesh onto the screen. Must be called after an affine matrix is generated for its
     /// transformation (see Transformation.generate_affine_matrix)
-    pub fn draw(&self, renderer: &mut Renderer, world: &World) {
+    pub fn draw(&mut self, renderer: &mut Renderer, world: &World) {
         let vertices_projected: Vec<Vector3> = self
             .vertices
             .clone()
@@ -108,14 +113,10 @@ impl Mesh {
             let b = vertices_projected[face.1 as usize];
             let c = vertices_projected[face.2 as usize];
             if (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y) > 0. {
-                let shading = self
-                    .transformation
-                    .transformed(&face.3)
-                    .cos_similarity(&world.light.direction)
-                    * world.light.intensity
-                    + world.ambient;
-                let color = self.color * (1. - shading);
-                renderer.draw_triangle(&a, &b, &c, &color);
+                let brightness = self
+                    .shader
+                    .calculate_lighting(&self.transformation.transformed(&face.3), world);
+                renderer.draw_triangle(&a, &b, &c, self.shader.as_ref(), brightness);
             }
         }
     }
