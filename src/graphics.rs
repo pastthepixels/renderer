@@ -12,7 +12,7 @@ pub struct Renderer {
     canvas: sdl2::render::Canvas<Window>,
     event_pump: sdl2::EventPump,
     running: bool,
-    depth_buffer: Vec<f32>,
+    depth_buffer: Box<[f32]>,
     empty_buffer: Box<[f32]>,
     width: u32,
     height: u32,
@@ -35,8 +35,8 @@ impl Renderer {
             canvas: window.into_canvas().build().unwrap(),
             event_pump: sdl_context.event_pump().unwrap(),
             running: true,
-            depth_buffer: Vec::new(),
-            empty_buffer: vec![-1.; (width * height) as usize].into_boxed_slice(),
+            depth_buffer: Box::new([]),
+            empty_buffer: vec![0.; (width * height) as usize].into_boxed_slice(),
             width,
             height,
         }
@@ -61,7 +61,7 @@ impl Renderer {
                 camera.size.y = height as f32;
                 camera.aspect = width as f32 / height as f32;
                 camera.generate_projection_matrix();
-                self.empty_buffer = vec![-1.; (width * height) as usize].into_boxed_slice();
+                self.empty_buffer = vec![0.; (width * height) as usize].into_boxed_slice();
             }
         }
     }
@@ -79,7 +79,7 @@ impl Renderer {
 
     /// Clears the canvas, must be called at the start of each loop
     pub fn clear(&mut self) {
-        self.depth_buffer = (*self.empty_buffer).to_vec();
+        self.depth_buffer = self.empty_buffer.clone();
 
         self.canvas.set_draw_color(sdl2::pixels::Color::RGB(
             self.clear_color.0,
@@ -149,7 +149,7 @@ impl Renderer {
                     let depth_index = self.width as usize * y as usize + x as usize;
                     let depth_entry = self.depth_buffer[depth_index];
                     let depth = coords.x * a.z + coords.y * b.z + coords.z * c.z;
-                    if (depth_entry > depth || depth_entry == -1.) && depth > 0. {
+                    if (depth_entry > depth || depth_entry == 0.) && depth > 0. {
                         // Write to screen / depth buffer
                         self.depth_buffer[depth_index] = depth;
                         self.draw_pixel(x, y, &(shader.fragment(&coords) * brightness));
