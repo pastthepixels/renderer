@@ -2,7 +2,11 @@ extern crate sdl2;
 
 use sdl2::video::Window;
 
-use crate::{camera::PerspectiveCamera, math::Vector3, shaders::Shader};
+use crate::{
+    camera::PerspectiveCamera,
+    math::{self, Vector3},
+    shaders::Shader,
+};
 
 #[derive(Copy, Clone)]
 pub struct Color(pub u8, pub u8, pub u8);
@@ -138,12 +142,14 @@ impl Renderer {
             min_y as f32,
         ) - top_left;
         // Drawing
+        let mut coords_row = top_left;
         for y in min_y..(max_y + 1) {
             // Barycentric coordinates for the left of the row.
-            let coords_row = top_left + (delta_y * (y - min_y) as f32);
+            let mut coords = coords_row + delta_y;
+            coords_row = coords;
             for x in min_x..(max_x + 1) {
                 // Barycentric coordinates
-                let coords = coords_row + delta_x * ((x - min_x) as f32);
+                coords = coords + delta_x;
                 if coords.x >= 0. && coords.y >= 0. && coords.z >= 0. {
                     // Depth
                     let depth_index = self.width as usize * y as usize + x as usize;
@@ -169,15 +175,14 @@ impl Renderer {
         p_x: f32,
         p_y: f32,
     ) -> Vector3 {
-        let d00 = (b_x - a_x).powi(2) + (b_y - a_y).powi(2);
-        let d01 = (b_x - a_x) * (c_x - a_x) + (b_y - a_y) * (c_y - a_y);
-        let d11 = (c_x - a_x).powi(2) + (c_y - a_y).powi(2);
-        let d20 = (b_x - a_x) * (p_x - a_x) + (b_y - a_y) * (p_y - a_y);
-        let d21 = (p_x - a_x) * (c_x - a_x) + (p_y - a_y) * (c_y - a_y);
-        let det = d00 * d11 - d01 * d01;
+        let dca = math::Vector2::new(c_x - a_x, c_y - a_y);
+        let dpa = math::Vector2::new(p_x - a_x, p_y - a_y);
+        let dba = math::Vector2::new(b_x - a_x, b_y - a_y);
+        let deti = 1. / (dba.x * dca.y - dca.x * dba.y);
 
-        let v = (d11 * d20 - d01 * d21) / det;
-        let w = (d00 * d21 - d01 * d20) / det;
+        let v = (dpa.x * dca.y - dpa.y * dca.x) * deti;
+        let w = (dpa.y * dba.x - dpa.x * dba.y) * deti;
+
         Vector3 {
             x: 1. - v - w,
             y: v,
