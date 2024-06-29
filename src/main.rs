@@ -7,7 +7,7 @@ mod shaders;
 mod world;
 
 pub fn main() {
-    let file_path = "models/quad_damage/quad_damage.obj";
+    let file_path = "models/cube.obj";
 
     let mut renderer = graphics::Renderer::new(
         &format!("u tell me a spike rasterised this {}", file_path),
@@ -25,7 +25,12 @@ pub fn main() {
 
     let mut mesh_loaded = loader::load(file_path);
 
-    let shader = shaders::StandardShader::new(graphics::Color(72, 82, 118));
+    let shader = shaders::TextureShader::new(
+        shaders::TextureShader::image2vec("models/quad_damage/texture.png")
+            .expect("can't load the image... because of woke"),
+        308.,
+        121.,
+    );
     mesh_loaded.shader = Box::new(shader);
 
     let mut keyframe = 0.;

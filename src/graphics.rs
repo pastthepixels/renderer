@@ -4,7 +4,7 @@ use sdl2::video::Window;
 
 use crate::{
     camera::PerspectiveCamera,
-    math::{self, Vector3},
+    math::{self, Vector2, Vector3},
     shaders::Shader,
 };
 
@@ -99,6 +99,9 @@ impl Renderer {
         a: &Vector3,
         b: &Vector3,
         c: &Vector3,
+        uva: &Vector2,
+        uvb: &Vector2,
+        uvc: &Vector2,
         shader: &dyn Shader,
         brightness: f32,
     ) {
@@ -155,10 +158,14 @@ impl Renderer {
                     let depth_index = self.width as usize * y as usize + x as usize;
                     let depth_entry = self.depth_buffer[depth_index];
                     let depth = coords.x * a.z + coords.y * b.z + coords.z * c.z;
-                    if (depth_entry > depth || depth_entry == 0.) && depth > 0. {
+                    if depth > 0. && (depth_entry > depth || depth_entry == 0.) {
                         // Write to screen / depth buffer
                         self.depth_buffer[depth_index] = depth;
-                        self.draw_pixel(x, y, &(shader.fragment(&coords) * brightness));
+                        self.draw_pixel(
+                            x,
+                            y,
+                            &(shader.fragment(&coords, uva, uvb, uvc) * brightness),
+                        );
                     }
                 }
             }

@@ -3,6 +3,7 @@ use std::ops::Deref;
 use crate::graphics::Color;
 use crate::graphics::Renderer;
 use crate::math::Matrix44;
+use crate::math::Vector2;
 use crate::math::Vector3;
 use crate::math::Vector4;
 use crate::shaders;
@@ -14,19 +15,35 @@ use crate::world::World;
 // Faces
 //
 #[derive(Copy, Clone)]
-pub struct Face(u32, u32, u32, Vector3);
+pub struct Face {
+    pub a: u32,
+    pub b: u32,
+    pub c: u32,
+    pub normal: Vector3,
+    pub uva: usize,
+    pub uvb: usize,
+    pub uvc: usize,
+}
 
 impl Face {
     /// Creates a new Face.
     /// Faces store vertices as indices in a list (or Rust vector) containing Vector3.
-    pub fn new(a: u32, b: u32, c: u32) -> Face {
+    pub fn new(a: u32, b: u32, c: u32, uva: usize, uvb: usize, uvc: usize) -> Face {
         // TODO: pointer instead of copy
-        Face(a, b, c, Vector3::new(0., 0., 0.)) // TODO: compute_normal
+        Face {
+            a,
+            b,
+            c,
+            uva,
+            uvb,
+            uvc,
+            normal: Vector3::new(0., 0., 0.),
+        }
     }
 
     pub fn compute_normal(&mut self, vertices_list: &[Vector3]) {
-        self.3 = (vertices_list[self.0 as usize] - vertices_list[self.1 as usize])
-            .cross_product(&(vertices_list[self.1 as usize] - vertices_list[self.2 as usize]))
+        self.normal = (vertices_list[self.a as usize] - vertices_list[self.b as usize])
+            .cross_product(&(vertices_list[self.b as usize] - vertices_list[self.c as usize]))
             .normalised();
     }
 }
@@ -76,15 +93,17 @@ impl Transformation {
 pub struct Mesh {
     pub vertices: Vec<Vector3>,
     pub faces: Vec<Face>,
+    pub uvs: Vec<Vector2>,
     pub transformation: Transformation,
     pub shader: Box<dyn shaders::Shader>,
 }
 
 impl Mesh {
-    pub fn new(vertices: Vec<Vector3>, faces: Vec<Face>) -> Mesh {
+    pub fn new(vertices: Vec<Vector3>, faces: Vec<Face>, uvs: Vec<Vector2>) -> Mesh {
         Mesh {
             vertices,
             faces,
+            uvs,
             transformation: Transformation {
                 position: Vector3::new(0., 0., 0.),
                 scale: 1.0,
@@ -109,14 +128,24 @@ impl Mesh {
             })
             .collect();
         for face in &self.faces {
-            let a = vertices_projected[face.0 as usize];
-            let b = vertices_projected[face.1 as usize];
-            let c = vertices_projected[face.2 as usize];
+            let a = vertices_projected[face.a as usize];
+            let b = vertices_projected[face.b as usize];
+            let c = vertices_projected[face.c as usize];
             if (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y) > 0. {
                 let brightness = self
                     .shader
-                    .calculate_lighting(&self.transformation.transformed(&face.3), world);
-                renderer.draw_triangle(&a, &b, &c, self.shader.as_ref(), brightness);
+                    .calculate_lighting(&self.transformation.transformed(&face.normal), world);
+
+                renderer.draw_triangle(
+                    &a,
+                    &b,
+                    &c,
+                    &self.uvs[face.uva],
+                    &self.uvs[face.uvb],
+                    &self.uvs[face.uvc],
+                    self.shader.as_ref(),
+                    brightness,
+                );
             }
         }
     }
