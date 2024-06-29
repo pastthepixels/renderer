@@ -16,9 +16,9 @@ use crate::world::World;
 //
 #[derive(Copy, Clone)]
 pub struct Face {
-    pub a: u32,
-    pub b: u32,
-    pub c: u32,
+    pub a: usize,
+    pub b: usize,
+    pub c: usize,
     pub normal: Vector3,
     pub uva: usize,
     pub uvb: usize,
@@ -28,7 +28,7 @@ pub struct Face {
 impl Face {
     /// Creates a new Face.
     /// Faces store vertices as indices in a list (or Rust vector) containing Vector3.
-    pub fn new(a: u32, b: u32, c: u32, uva: usize, uvb: usize, uvc: usize) -> Face {
+    pub fn new(a: usize, b: usize, c: usize, uva: usize, uvb: usize, uvc: usize) -> Face {
         // TODO: pointer instead of copy
         Face {
             a,
@@ -42,8 +42,8 @@ impl Face {
     }
 
     pub fn compute_normal(&mut self, vertices_list: &[Vector3]) {
-        self.normal = (vertices_list[self.a as usize] - vertices_list[self.b as usize])
-            .cross_product(&(vertices_list[self.b as usize] - vertices_list[self.c as usize]))
+        self.normal = (vertices_list[self.a] - vertices_list[self.b])
+            .cross_product(&(vertices_list[self.b] - vertices_list[self.c]))
             .normalised();
     }
 }
@@ -128,21 +128,30 @@ impl Mesh {
             })
             .collect();
         for face in &self.faces {
-            let a = vertices_projected[face.a as usize];
-            let b = vertices_projected[face.b as usize];
-            let c = vertices_projected[face.c as usize];
+            let a = vertices_projected[face.a];
+            let b = vertices_projected[face.b];
+            let c = vertices_projected[face.c];
             if (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y) > 0. {
                 let brightness = self
                     .shader
                     .calculate_lighting(&self.transformation.transformed(&face.normal), world);
-
+                // TODO: Don't need to calculate perspective correct textures -- yet?
+                /*let aw = world
+                    .camera
+                    .get_w(&self.vertices[face.a], &self.transformation);
+                let bw = world
+                    .camera
+                    .get_w(&self.vertices[face.b], &self.transformation);
+                let cw = world
+                    .camera
+                    .get_w(&self.vertices[face.c], &self.transformation);*/
                 renderer.draw_triangle(
                     &a,
                     &b,
                     &c,
-                    &self.uvs[face.uva],
-                    &self.uvs[face.uvb],
-                    &self.uvs[face.uvc],
+                    (&self.uvs[face.uva], 1.),
+                    (&self.uvs[face.uvb], 1.),
+                    (&self.uvs[face.uvc], 1.),
                     self.shader.as_ref(),
                     brightness,
                 );

@@ -8,8 +8,13 @@ use image::{flat::Error, io::Reader as ImageReader};
 
 // Generic trait for all shaders.
 pub trait Shader {
-    fn fragment(&self, barycentric: &Vector3, uva: &Vector2, uvb: &Vector2, uvc: &Vector2)
-        -> Color;
+    fn fragment(
+        &self,
+        barycentric: &Vector3,
+        uva: (&Vector2, f32),
+        uvb: (&Vector2, f32),
+        uvc: (&Vector2, f32),
+    ) -> Color;
     // by default, calculates lighting but does not apply it in the fragment shader (unshaded)
     fn calculate_lighting(&mut self, normal: &Vector3, world: &World) -> f32 {
         1. - (normal.cos_similarity(&world.light.direction) * world.light.intensity + world.ambient)
@@ -25,9 +30,9 @@ impl Shader for StandardShader {
     fn fragment(
         &self,
         _barycentric: &Vector3,
-        _uva: &Vector2,
-        _uvb: &Vector2,
-        _uvc: &Vector2,
+        _uva: (&Vector2, f32),
+        _uvb: (&Vector2, f32),
+        _uvc: (&Vector2, f32),
     ) -> Color {
         self.color
     }
@@ -50,22 +55,20 @@ impl Shader for TextureShader {
     fn fragment(
         &self,
         barycentric: &Vector3,
-        uva: &Vector2,
-        uvb: &Vector2,
-        uvc: &Vector2,
+        uva: (&Vector2, f32),
+        uvb: (&Vector2, f32),
+        uvc: (&Vector2, f32),
     ) -> Color {
-        // "coords" are the barycentric coordinates of the current pixel
-        // "at", "bt", "ct" are the texture coordinates of the corners of the current triangle
-        let uvx = barycentric.x * uva.x + barycentric.y * uvb.x + barycentric.z * uvc.x;
-        let uvy = barycentric.x * uva.y + barycentric.y * uvb.y + barycentric.z * uvc.y;
+        // TODO: perspective correction?
+        let uvx = barycentric.x * uva.0.x + barycentric.y * uvb.0.x + barycentric.z * uvc.0.x;
+        let uvy = barycentric.x * uva.0.y + barycentric.y * uvb.0.y + barycentric.z * uvc.0.y;
 
         // convert to texture space
-        let tx = (uvx * self.width) as usize;
-        let ty = (uvy * self.height) as usize;
+        let tx = (uvx.min(1.) * self.width) as usize;
+        let ty = (uvy.min(1.) * self.height) as usize;
 
         // grab the corresponding pixel color on the texture
-        self.image
-            [(tx + (ty * self.width as usize)).min(self.width as usize * self.height as usize - 1)]
+        self.image[tx + (ty * self.width as usize)]
     }
 }
 
@@ -99,9 +102,9 @@ impl Shader for WireframeShader {
     fn fragment(
         &self,
         barycentric: &Vector3,
-        _uva: &Vector2,
-        _uvb: &Vector2,
-        _uvc: &Vector2,
+        _uva: (&Vector2, f32),
+        _uvb: (&Vector2, f32),
+        _uvc: (&Vector2, f32),
     ) -> Color {
         if barycentric.x <= self.thickness
             || barycentric.y <= self.thickness

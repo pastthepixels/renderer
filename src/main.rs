@@ -7,7 +7,7 @@ mod shaders;
 mod world;
 
 pub fn main() {
-    let file_path = "models/cube.obj";
+    let file_path = "models/quad_damage/quad_damage.obj";
 
     let mut renderer = graphics::Renderer::new(
         &format!("u tell me a spike rasterised this {}", file_path),

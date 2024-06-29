@@ -30,7 +30,11 @@ pub fn load(file_path: &str) -> Mesh {
                 }
                 "vt" => {
                     let split = &line[3..].split(' ').collect::<Vec<_>>();
-                    let vector = Vector2::new(split[0].parse().unwrap(), split[1].parse().unwrap());
+                    // TODO: inverts uvy, bad idea?
+                    let vector = Vector2::new(
+                        split[0].parse().unwrap(),
+                        1. - split[1].parse::<f32>().unwrap(),
+                    );
                     uvs.push(vector);
 
                     println!("vt {} {}", split[0], split[1]);
@@ -40,11 +44,11 @@ pub fn load(file_path: &str) -> Mesh {
                 }
                 "f " => {
                     let split = &line[2..].split(' ').collect::<Vec<_>>();
-                    let mut face_vertices: Vec<u32> = Vec::new();
+                    let mut face_vertices: Vec<usize> = Vec::new();
                     let mut face_uvs: Vec<usize> = Vec::new();
                     for vertex in split {
                         let vertex_split = &vertex[0..].split('/').collect::<Vec<_>>();
-                        face_vertices.push(vertex_split[0].parse::<u32>().unwrap() - 1);
+                        face_vertices.push(vertex_split[0].parse::<usize>().unwrap() - 1);
                         face_uvs.push(vertex_split[1].parse::<usize>().unwrap() - 1);
                     }
 

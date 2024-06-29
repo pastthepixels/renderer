@@ -99,9 +99,9 @@ impl Renderer {
         a: &Vector3,
         b: &Vector3,
         c: &Vector3,
-        uva: &Vector2,
-        uvb: &Vector2,
-        uvc: &Vector2,
+        uva: (&Vector2, f32), // contains w for perspective correct textures
+        uvb: (&Vector2, f32),
+        uvc: (&Vector2, f32),
         shader: &dyn Shader,
         brightness: f32,
     ) {

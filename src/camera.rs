@@ -49,6 +49,15 @@ impl PerspectiveCamera {
         }
     }
 
+    pub fn get_w(&self, point: &Vector3, transformation: &Transformation) -> f32 {
+        let point = transformation.transformed(point) - self.position; // TODO: cache
+                                                                       // fully transformed?
+        self.projection_matrix.get(3, 0) * point.x
+            + self.projection_matrix.get(3, 1) * point.y
+            + self.projection_matrix.get(3, 2) * point.z
+            + self.projection_matrix.get(3, 3)
+    }
+
     pub fn project_point(&self, point: &Vector3, transformation: &Transformation) -> Vector3 {
         let point = transformation.transformed(point) - self.position;
         let mut projected = self
